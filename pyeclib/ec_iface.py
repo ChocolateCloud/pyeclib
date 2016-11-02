@@ -117,6 +117,10 @@ class PyECLib_EC_Types(PyECLibEnum):
     isa_l_rs_vand = 4
     shss = 5
     liberasurecode_rs_vand = 6
+    chocolate_cloud_systematic_rlnc = 7
+    chocolate_cloud_full_rlnc = 8
+    chocolate_cloud_rs = 9
+
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data
@@ -505,6 +509,9 @@ ALL_EC_TYPES = [
     'isa_l_rs_vand',
     'shss',
     'liberasurecode_rs_vand',
+    'chocolate_cloud_systematic_rlnc',
+    'chocolate_cloud_full_rlnc',
+    'chocolate_cloud_rs'
 ]
 
 
