@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Average</title>
+		<style>
+			html{
+				padding: none;
+				margin: none;
+				border: none;
+				width: 100%;
+				height: 100%;
+			}
+			body{
+				padding: 16px;
+				height: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<h1>Average calculator for raw CSV data of backend speed benchmark</h1>
+		Choose the raw data file: <input type="file" id="file_input" />
+		<br/><br/>
+
+		<textarea id="output_text" style="width: 50%; height: 60%"></textarea>
+
+		<script type="text/javascript">
+			var output = document.getElementById("output_text");
+			var file_input = document.getElementById("file_input");
+
+			// List the column indexes that needs to be checked.
+			// If any of them change, the script calculates the average of the previous set
+			var columns_to_check = [0,1,2,3]
+
+			// List column indexes which are averaged 
+			var columns_to_average = [ 4 ]
+
+			function max(arr){
+				var max_val = 0;
+				for(var i in arr){ if(arr[i] > max_val){ max_val = arr[i]; } }
+				return max_val;
+			}
+
+			function processFile(lines){
+
+				var col_names = [];
+
+				var current_lines = [];
+
+
+				for(var idx in lines){
+					var line = lines[idx];
+
+					if(idx == 0){
+						console.log(line)
+						// Get the number of columns from the first line
+						col_names = line.split(",");
+
+						// Check preconditions
+						if((col_names.length-1) < max(columns_to_check) || (col_names.length-1) < max(columns_to_average)){
+							output.value = "ERROR! The CSV has less columns than needed by the settings!";
+							return;
+						}
+						else{
+							// Start writing output with the header row
+							output.value += col_names.join(",") + "\n";
+						}
+						// Skip to the next row after parsing what we needed from the first col
+						continue;
+					}
+
+					
+
+					// Split the line to cols
+					line = line.split(",");
+
+					// Check if we need to average
+					var col_changed = false;
+					if(current_lines.length > 0){
+						
+						for(var i in columns_to_check){
+							var colidx = columns_to_check[i];
+							// check if the current and last values are the same
+							var last_value = current_lines[current_lines.length-1][colidx];
+							var curr_value = line[colidx];
+							if(last_value !== curr_value){
+								//console.log("At Row " + idx + ", col " + i + " value changed from " + last_value + " to " + curr_value);
+								col_changed = true;
+								break;
+							}
+						}	
+					}
+					
+
+					if(col_changed){
+						// If there was a  change, we calculate average and write aggregated row
+						var aggregated_row_cols = [];
+						var previous_line = current_lines[current_lines.length-1];
+
+						// Iterate over the columns
+						for(var i=0 ; i< previous_line.length ; ++i){
+							// Check if the column should be averaged
+
+							if(columns_to_average.indexOf(i) === -1){
+								// No averaging, just copy the previous value
+								aggregated_row_cols.push(previous_line[i]);
+							}
+							else{
+								// Calculate average of all previous values
+								var sum = 0, elements=0;
+								for(var j=0 ; j<current_lines.length ; ++j){
+									// Convert to number
+									current_lines[j][i] = current_lines[j][i]-0;
+
+									// Filtering out non-numeric values (like 'inf')
+									if(current_lines[j][i] >= 0 || current_lines[j][i] < 0){
+										sum += current_lines[j][i];
+										++elements;
+									}
+								}
+								var avg = sum / elements;
+
+								aggregated_row_cols.push(avg.toFixed(2));
+							}
+						}
+						output.value += aggregated_row_cols.join(",") + "\n";
+
+						// Clear the lines buffer
+						current_lines = [];
+					}
+
+					// Add the current line to the buffer
+					current_lines.push(line);
+				}
+			}
+
+
+			file_input.onchange = function(evt){
+				var input = evt.target;
+			    
+			    var reader = new FileReader();
+			    reader.onload = function(e){
+			    	output.value = "";
+			    	var lines = this.result.split(/\r?\n/);
+			      	processFile(lines);
+			    };
+
+			    reader.readAsText(input.files[0]);
+			}
+
+		</script>
+	</body>
+</html>
